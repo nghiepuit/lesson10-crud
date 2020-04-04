@@ -15,7 +15,7 @@ class TaskForm extends Component {
                 status : this.props.itemEditing.status
             });
         }else{
-            this.resetState();
+            this.onClear();
         }
     }
 
@@ -27,7 +27,7 @@ class TaskForm extends Component {
                 status : nextProps.itemEditing.status
             });
         }else{
-            this.resetState();
+            this.onClear();
         }
     }
 
@@ -43,11 +43,11 @@ class TaskForm extends Component {
     onHandleSubmit = (event) => {
         event.preventDefault();
         this.props.onSave(this.state);
-        this.resetState();
+        this.onClear();
         this.onExitForm();
     }
 
-    resetState = () => {
+    onClear = () => {
         this.setState({
             id : '',
             name : '',
@@ -97,7 +97,7 @@ class TaskForm extends Component {
                             <button type="submit" className="btn btn-warning">
                                 <span className="fa fa-plus mr-5"></span>Lưu Lại
                             </button>&nbsp;
-                            <button type="button" onClick={ this.resetState } className="btn btn-danger">
+                            <button type="button" onClick={ this.onClear } className="btn btn-danger">
                                 <span className="fa fa-close mr-5"></span>Hủy Bỏ
                             </button>
                         </div>

@@ -3,7 +3,6 @@ import './App.css';
 import TaskList from './components/TaskList';
 import TaskForm from './components/TaskForm';
 import TaskControl from './components/TaskControl';
-import { findIndex, remove, filter, includes, orderBy } from 'lodash';
 
 class App extends Component {
 
@@ -11,13 +10,13 @@ class App extends Component {
         super(props);
         this.state = {
             tasks : [],
-            isShowingForm : false,
+            isDisplayForm : false,
             keyword : '',
-            sortBy : 'name',
-            sortValue : 'asc',
             filterName : '',
             filterStatus : '-1',
-            itemEditing : null
+            itemEditing : null,
+            sortBy : 'name',
+            sortValue : 1
         };
     }
 
@@ -38,9 +37,20 @@ class App extends Component {
         return this.s4() + this.s4() + '-' + this.s4() + '-' + this.s4() + '-' + this.s4() + '-' + this.s4() + this.s4() + this.s4();
     }
 
+    findIndex = (id) => {
+        var { tasks } = this.state;
+        var result = -1;
+        tasks.forEach((task, index) => {
+            if(task.id === id){
+                result = index;
+            }
+        });
+        return result;
+    }
+
     onUpdateStatus = (id) => {
         var tasks = this.state.tasks;
-        var index = findIndex(tasks, { id : id });
+        var index = this.findIndex(id);
         tasks[index].status = !tasks[index].status;
         this.setState({
             tasks : tasks
@@ -55,7 +65,7 @@ class App extends Component {
             data.id = this.guid();
             tasks.push(data);
         }else{
-            var index = findIndex(tasks, { id : data.id })
+            var index = this.findIndex(data.id);
             tasks[index] = data;
         }
         this.setState({
@@ -66,27 +76,27 @@ class App extends Component {
 
     onToggleForm = () => {
         if(this.state.itemEditing !== null){
-            console.log('th1')
             this.setState({
                 itemEditing : null
             });
         }else{
             this.setState({
-                isShowingForm : !this.state.isShowingForm
+                isDisplayForm : !this.state.isDisplayForm
             });
         }
     }
 
     onExitForm = () =>{
         this.setState({
-            isShowingForm : false,
+            isDisplayForm : false,
             itemEditing : null
         });
     }
 
     onDeleteTask = (id) => {
-        var tasks = this.state.tasks;
-        remove(tasks, { id : id });
+        var { tasks } = this.state;
+        var index = this.findIndex(id);
+        tasks.splice(index, 1);
         this.setState({
             tasks : tasks
         });
@@ -100,13 +110,6 @@ class App extends Component {
         });
     }
 
-    onSort = (sortBy, sortValue) => {
-        this.setState({
-            sortBy : sortBy,
-            sortValue : sortValue
-        });
-    }
-
     onFilter = (filterName, filterStatus) => {
         this.setState({
             filterName : filterName,
@@ -117,22 +120,39 @@ class App extends Component {
     onSelectedItem = (item) => {
         this.setState({
             itemEditing : item,
-            isShowingForm : true
+            isDisplayForm : true
+        })
+    }
+
+    onSort = (sortBy, sortValue) => {
+        this.setState({
+            sortBy : sortBy,
+            sortValue : sortValue
         })
     }
 
     render() {
-        var { tasks, isShowingForm, keyword, sortBy, sortValue, filterName, filterStatus, itemEditing } = this.state;
-        tasks = filter(tasks, (task) => {
-            return includes(task.name.toLowerCase(), keyword.toLowerCase());
+        var {
+            tasks,
+            isDisplayForm,
+            keyword, filterName,
+            filterStatus,
+            itemEditing,
+            sortBy,
+            sortValue
+        } = this.state;
+
+        tasks = tasks.filter((task) => {
+            return task.name.toLowerCase().indexOf(keyword.toLowerCase()) !== -1;
         });
+
         if(filterName){
-            tasks = filter(tasks, (task) => {
-                return includes(task.name.toLowerCase(), filterName.toLowerCase());
+            tasks = tasks.filter((task) => {
+                return task.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
             });
         }
         if(filterStatus){
-            tasks = filter(tasks, (task) => {
+            tasks = tasks.filter((task) => {
                 if(filterStatus === '-1' || filterStatus === -1){
                     return task;
                 }else{
@@ -140,8 +160,20 @@ class App extends Component {
                 }
             });
         }
-        tasks = orderBy(tasks, [sortBy], [sortValue]);
-        var elmForm = isShowingForm === true ? <TaskForm
+        if(sortBy === 'name'){
+            tasks.sort((a, b) => {
+                if(a.name > b.name) return sortValue;
+                else if(a.name < b.name) return -sortValue;
+                else return 0;
+            });
+        }else{
+            tasks.sort((a, b) => {
+                if(a.status > b.status) return -sortValue;
+                else if(a.status < b.status) return sortValue;
+                else return 0;
+            });
+        }
+        var elmForm = isDisplayForm === true ? <TaskForm
                                                     onSave={this.onSave}
                                                     onExitForm={this.onExitForm}
                                                     itemEditing={ itemEditing }
@@ -152,10 +184,10 @@ class App extends Component {
                     <h1>Quản Lý Công Việc</h1><hr/>
                 </div>
                 <div className="row">
-                    <div className={ isShowingForm === true ? 'col-xs-4 col-sm-4 col-md-4 col-lg-4' : '' }>
+                    <div className={ isDisplayForm === true ? 'col-xs-4 col-sm-4 col-md-4 col-lg-4' : '' }>
                         { elmForm }
                     </div>
-                    <div className={ isShowingForm === true ? 'col-xs-8 col-sm-8 col-md-8 col-lg-8' : 'col-xs-12 col-sm-12 col-md-12 col-lg-12' }>
+                    <div className={ isDisplayForm === true ? 'col-xs-8 col-sm-8 col-md-8 col-lg-8' : 'col-xs-12 col-sm-12 col-md-12 col-lg-12' }>
                         <button type="button" className="btn btn-primary" onClick={this.onToggleForm} >
                             <span className="fa fa-plus mr-5"></span>Thêm Công Việc
                         </button>
